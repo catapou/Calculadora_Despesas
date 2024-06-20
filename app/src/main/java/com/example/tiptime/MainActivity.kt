@@ -1,18 +1,3 @@
-/*
- * Copyright (C) 2023 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.example.tiptime
 
 import android.os.Bundle
@@ -21,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +17,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -49,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import com.example.tiptime.ui.theme.TipTimeTheme
 import java.text.NumberFormat
 
+data class Expense(var name: String, var amount: String)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -58,7 +47,7 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    TipTimeLayout()
+                    SalaryExpenseLayout()
                 }
             }
         }
@@ -66,11 +55,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TipTimeLayout() {
-    var amountInput by remember { mutableStateOf("") }
+fun SalaryExpenseLayout() {
+    var salaryInput by remember { mutableStateOf("") }
+    var expenses by remember { mutableStateOf(listOf(Expense("", ""))) }
 
-    val amount = amountInput.toDoubleOrNull() ?: 0.0
-    val tip = calculateTip(amount)
+    val salary = salaryInput.toDoubleOrNull() ?: 0.0
+    val totalExpenses = expenses.mapNotNull { it.amount.toDoubleOrNull() }.sum()
+    val remainingAmount = calculateRemainingAmount(salary, totalExpenses)
 
     Column(
         modifier = Modifier
@@ -82,18 +73,54 @@ fun TipTimeLayout() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.calculate_tip),
+            text = stringResource(R.string.salary_expense_calculator),
             modifier = Modifier
                 .padding(bottom = 16.dp, top = 40.dp)
                 .align(alignment = Alignment.Start)
         )
         EditNumberField(
-            value = amountInput,
-            onValueChanged = { amountInput = it },
-            modifier = Modifier.padding(bottom = 32.dp).fillMaxWidth()
+            value = salaryInput,
+            onValueChanged = { salaryInput = it },
+            label = stringResource(R.string.salary_amount),
+            modifier = Modifier
+                .padding(bottom = 16.dp)
+                .fillMaxWidth()
         )
         Text(
-            text = stringResource(R.string.tip_amount, tip),
+            text = stringResource(R.string.expense_amounts),
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .align(alignment = Alignment.Start)
+        )
+        expenses.forEachIndexed { index, expense ->
+            ExpenseItem(
+                expense = expense,
+                onNameChanged = { newName ->
+                    expenses = expenses.toMutableList().apply { this[index] = this[index].copy(name = newName) }
+                },
+                onAmountChanged = { newAmount ->
+                    expenses = expenses.toMutableList().apply { this[index] = this[index].copy(amount = newAmount) }
+                },
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .fillMaxWidth()
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Button(onClick = { expenses = expenses + Expense("", "") }) {
+                Text(stringResource(R.string.add_expense))
+            }
+            Button(onClick = { if (expenses.size > 1) expenses = expenses.dropLast(1) }) {
+                Text(stringResource(R.string.remove_expense))
+            }
+        }
+        Text(
+            text = stringResource(R.string.remaining_amount, remainingAmount),
             style = MaterialTheme.typography.displaySmall
         )
         Spacer(modifier = Modifier.height(150.dp))
@@ -101,36 +128,76 @@ fun TipTimeLayout() {
 }
 
 @Composable
+fun ExpenseItem(
+    expense: Expense,
+    onNameChanged: (String) -> Unit,
+    onAmountChanged: (String) -> Unit,
+    modifier: Modifier
+) {
+    var isEditingName by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (isEditingName) {
+                TextField(
+                    value = expense.name,
+                    singleLine = true,
+                    onValueChange = onNameChanged,
+                    label = { Text(stringResource(R.string.expense_name)) },
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Text(
+                    text = if (expense.name.isNotBlank()) expense.name else stringResource(R.string.expense_name),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Button(onClick = { isEditingName = !isEditingName }) {
+                Text(if (isEditingName) stringResource(R.string.done) else stringResource(R.string.edit))
+            }
+        }
+        TextField(
+            value = expense.amount,
+            singleLine = true,
+            onValueChange = onAmountChanged,
+            label = { Text(stringResource(R.string.expense_amount)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+        )
+    }
+}
+
+@Composable
 fun EditNumberField(
     value: String,
     onValueChanged: (String) -> Unit,
+    label: String,
     modifier: Modifier
 ) {
     TextField(
         value = value,
         singleLine = true,
-        modifier = modifier,
         onValueChange = onValueChanged,
-        label = { Text(stringResource(R.string.bill_amount)) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        label = { Text(label) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = modifier
     )
 }
 
 /**
- * Calculates the tip based on the user input and format the tip amount
- * according to the local currency.
+ * Calculates the remaining amount after subtracting the expenses from the salary.
+ * Formats the remaining amount according to the local currency.
  * Example would be "$10.00".
  */
-private fun calculateTip(amount: Double, tipPercent: Double = 15.0): String {
-    val tip = tipPercent / 100 * amount
-    return NumberFormat.getCurrencyInstance().format(tip)
+private fun calculateRemainingAmount(salary: Double, expenses: Double): String {
+    val remainingAmount = salary - expenses
+    return NumberFormat.getCurrencyInstance().format(remainingAmount)
 }
 
 @Preview(showBackground = true)
 @Composable
-fun TipTimeLayoutPreview() {
+fun SalaryExpenseLayoutPreview() {
     TipTimeTheme {
-        TipTimeLayout()
+        SalaryExpenseLayout()
     }
 }
-
