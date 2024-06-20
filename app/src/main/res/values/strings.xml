@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <resources>
     <string name="app_name">Tip Time</string>
-    <string name="salary_expense_calculator">Calculadora de Salário e Despesas</string>
-    <string name="salary_amount">Salário</string>
-    <string name="expense_amount">Despesa</string>
-    <string name="expense_name">Nome da Despesa</string>
-    <string name="expense_amounts">Despesas</string>
-    <string name="remaining_amount">Montante Restante: %1$s</string>
-    <string name="add_expense">Adicionar Despesa</string>
-    <string name="remove_expense">Remover Despesa</string>
-    <string name="edit">Editar</string>
-    <string name="done">Concluído</string>
+    <string name="salary_expense_calculator">Salary Expense Calculator</string>
+    <string name="salary_amount">Salary Amount</string>
+    <string name="expense_amounts">Expense Amounts</string>
+    <string name="expense_name">Expense Name</string>
+    <string name="expense_amount">Expense Amount</string>
+    <string name="add_expense">Add Expense</string>
+    <string name="remove_expense">Remove Expense</string>
+    <string name="remaining_amount">Remaining Amount: %1$s</string>
+    <string name="confirm">Confirm</string>
+    <string name="edit">Edit</string>
+    <string name="done">Done</string>
 </resources>
+
+

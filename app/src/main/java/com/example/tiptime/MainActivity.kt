@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,9 +17,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,12 +34,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Done
 import com.example.tiptime.ui.theme.TipTimeTheme
 import java.text.NumberFormat
+import java.util.Locale
 
 data class Expense(var name: String, var amount: String)
 
@@ -80,7 +91,7 @@ fun SalaryExpenseLayout() {
         )
         EditNumberField(
             value = salaryInput,
-            onValueChanged = { salaryInput = it },
+            onValueChanged = { if (it.isNumeric()) salaryInput = it },
             label = stringResource(R.string.salary_amount),
             modifier = Modifier
                 .padding(bottom = 16.dp)
@@ -99,7 +110,9 @@ fun SalaryExpenseLayout() {
                     expenses = expenses.toMutableList().apply { this[index] = this[index].copy(name = newName) }
                 },
                 onAmountChanged = { newAmount ->
-                    expenses = expenses.toMutableList().apply { this[index] = this[index].copy(amount = newAmount) }
+                    if (newAmount.isNumeric()) {
+                        expenses = expenses.toMutableList().apply { this[index] = this[index].copy(amount = newAmount) }
+                    }
                 },
                 modifier = Modifier
                     .padding(bottom = 8.dp)
@@ -135,8 +148,14 @@ fun ExpenseItem(
     modifier: Modifier
 ) {
     var isEditingName by remember { mutableStateOf(false) }
+    var isEditingAmount by remember { mutableStateOf(false) }
+    var tempAmount by remember { mutableStateOf(expense.amount) }
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .background(Color.Gray.copy(alpha = 0.2f), shape = RoundedCornerShape(8.dp))
+            .padding(8.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (isEditingName) {
                 TextField(
@@ -152,18 +171,56 @@ fun ExpenseItem(
                     modifier = Modifier.weight(1f)
                 )
             }
-            Button(onClick = { isEditingName = !isEditingName }) {
-                Text(if (isEditingName) stringResource(R.string.done) else stringResource(R.string.edit))
+            IconButton(onClick = { isEditingName = !isEditingName }) {
+                Icon(
+                    imageVector = if (isEditingName) Icons.Filled.Done else Icons.Filled.Edit,
+                    contentDescription = if (isEditingName) stringResource(R.string.done) else stringResource(R.string.edit)
+                )
             }
         }
-        TextField(
-            value = expense.amount,
-            singleLine = true,
-            onValueChange = onAmountChanged,
-            label = { Text(stringResource(R.string.expense_amount)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(top = 8.dp)
+        ) {
+            if (isEditingAmount) {
+                TextField(
+                    value = tempAmount,
+                    singleLine = true,
+                    onValueChange = { if (it.isNumeric()) tempAmount = it },
+                    label = { Text(if (expense.amount.isEmpty()) stringResource(R.string.expense_amount) else "") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f)
+                )
+                Button(
+                    onClick = {
+                        onAmountChanged(tempAmount)
+                        isEditingAmount = false
+                    },
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Text(stringResource(R.string.confirm))
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isEditingAmount = true }
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (expense.amount.isNotBlank()) expense.amount else stringResource(R.string.expense_amount),
+                        modifier = Modifier.padding(end = 4.dp),
+                        textAlign = TextAlign.End
+                    )
+                    Text(
+                        text = "€",
+                        textAlign = TextAlign.End
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -184,6 +241,10 @@ fun EditNumberField(
     )
 }
 
+private fun String.isNumeric(): Boolean {
+    return this.toDoubleOrNull() != null
+}
+
 /**
  * Calculates the remaining amount after subtracting the expenses from the salary.
  * Formats the remaining amount according to the local currency.
@@ -191,7 +252,7 @@ fun EditNumberField(
  */
 private fun calculateRemainingAmount(salary: Double, expenses: Double): String {
     val remainingAmount = salary - expenses
-    return NumberFormat.getCurrencyInstance().format(remainingAmount)
+    return NumberFormat.getCurrencyInstance(Locale.FRANCE).format(remainingAmount)
 }
 
 @Preview(showBackground = true)
