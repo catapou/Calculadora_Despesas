@@ -23,7 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.unit.dp
 import com.example.tiptime.ui.theme.TipTimeTheme
 
@@ -44,7 +43,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun SalaryExpenseLayout(viewModel: MainViewModel = viewModel()) {
+fun SalaryExpenseLayout(viewModel: MainViewModel = MainViewModel()) {
     val salaryInput by viewModel.salaryInput
     val expenses = viewModel.expenses
     val remainingAmount = viewModel.remainingAmount
