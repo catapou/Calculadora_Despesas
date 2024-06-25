@@ -12,22 +12,14 @@ class MainViewModel : ViewModel() {
     var salaryInput = mutableStateOf("")
     var expenses = mutableStateListOf(Expense("", ""))
 
-    init {
-
-        if (expenses.isEmpty()) {
-            expenses.add(Expense("", ""))
-        }
-    }
-
     private var salary: Double = 0.0
         get() = salaryInput.value.toDoubleOrNull() ?: 0.0
 
     private var totalExpenses: Double = 0.0
-        get() = expenses.sumByDouble { it.amount.toDoubleOrNull() ?: 0.0 }
+        get() = expenses.mapNotNull { it.amount.toDoubleOrNull() }.sum()
 
     var remainingAmount: String = ""
         get() = calculateRemainingAmount(salary, totalExpenses)
-        private set
 
     fun addExpense() {
         expenses.add(Expense("", ""))
@@ -38,15 +30,11 @@ class MainViewModel : ViewModel() {
     }
 
     fun updateExpenseName(index: Int, newName: String) {
-        if (index in expenses.indices) {
-            expenses[index] = expenses[index].copy(name = newName)
-        }
+        expenses[index] = expenses[index].copy(name = newName)
     }
 
     fun updateExpenseAmount(index: Int, newAmount: String) {
-        if (index in expenses.indices) {
-            expenses[index] = expenses[index].copy(amount = newAmount)
-        }
+        expenses[index] = expenses[index].copy(amount = newAmount)
     }
 
     private fun calculateRemainingAmount(salary: Double, expenses: Double): String {

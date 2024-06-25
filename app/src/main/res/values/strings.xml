@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
-    <string name="app_name">TipTime</string>
+    <string name="app_name">Money Moves</string>
     <string name="salary_expense_calculator">Calculadora de Salário e Despesas</string>
     <string name="salary_amount">Salário</string>
     <string name="expense_amounts">Despesas</string>
-    <string name="expense_name">Nome da Despesa</string>
-    <string name="expense_amount">Montante da Despesa</string>
     <string name="add_expense">Adicionar Despesa</string>
     <string name="remove_expense">Remover Despesa</string>
-    <string name="confirm">Confirmar</string>
+    <string name="expense_name">Nome da Despesa</string>
+    <string name="expense_amount">Valor da Despesa</string>
+    <string name="remaining_amount">Montante Restante: %1$s</string>
     <string name="edit">Editar</string>
     <string name="done">Concluído</string>
-    <string name="remaining_amount">Montante Restante: €%1$s</string>
+    <string name="confirm">Confirmar</string>
+    <string name="salary_amount_label">Salário: %1$s€</string>
 </resources>
-
 
 

@@ -47,7 +47,6 @@ fun SalaryExpenseLayout(viewModel: MainViewModel = MainViewModel()) {
     val salaryInput by viewModel.salaryInput
     val expenses = viewModel.expenses
     val remainingAmount = viewModel.remainingAmount
-    var isEditingSalary by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -68,9 +67,6 @@ fun SalaryExpenseLayout(viewModel: MainViewModel = MainViewModel()) {
             value = salaryInput,
             onValueChanged = { if (it.isNumericOrEmpty()) viewModel.salaryInput.value = it },
             label = stringResource(R.string.salary_amount),
-            isEditing = isEditingSalary,
-            onEditClick = { isEditingSalary = true },
-            onConfirmClick = { isEditingSalary = false },
             modifier = Modifier
                 .padding(bottom = 16.dp)
                 .fillMaxWidth()
@@ -85,11 +81,11 @@ fun SalaryExpenseLayout(viewModel: MainViewModel = MainViewModel()) {
             ExpenseItem(
                 expense = expense,
                 onNameChanged = { newName ->
-                    expenses[index] = expenses[index].copy(name = newName)
+                    viewModel.updateExpenseName(index, newName)
                 },
                 onAmountChanged = { newAmount ->
                     if (newAmount.isNumericOrEmpty()) {
-                        expenses[index] = expenses[index].copy(amount = newAmount)
+                        viewModel.updateExpenseAmount(index, newAmount)
                     }
                 },
                 modifier = Modifier
@@ -115,52 +111,6 @@ fun SalaryExpenseLayout(viewModel: MainViewModel = MainViewModel()) {
             style = MaterialTheme.typography.displaySmall
         )
         Spacer(modifier = Modifier.height(150.dp))
-    }
-}
-
-@Composable
-fun EditNumberField(
-    value: String,
-    onValueChanged: (String) -> Unit,
-    label: String,
-    isEditing: Boolean,
-    onEditClick: () -> Unit,
-    onConfirmClick: () -> Unit,
-    modifier: Modifier
-) {
-    if (isEditing) {
-        Row(modifier = modifier) {
-            TextField(
-                value = value,
-                singleLine = true,
-                onValueChange = onValueChanged,
-                label = { Text(label) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
-            )
-            Button(
-                onClick = onConfirmClick,
-                modifier = Modifier.padding(start = 8.dp)
-            ) {
-                Text(stringResource(R.string.confirm))
-            }
-        }
-    } else {
-        Row(
-            modifier = modifier
-                .clickable(onClick = onEditClick)
-                .background(Color.Gray.copy(alpha = 0.2f), shape = RoundedCornerShape(8.dp))
-                .padding(16.dp)
-        ) {
-            Text(
-                text = if (value.isNotEmpty()) value else label,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = Icons.Filled.Edit,
-                contentDescription = stringResource(R.string.edit)
-            )
-        }
     }
 }
 
@@ -246,6 +196,23 @@ fun ExpenseItem(
             }
         }
     }
+}
+
+@Composable
+fun EditNumberField(
+    value: String,
+    onValueChanged: (String) -> Unit,
+    label: String,
+    modifier: Modifier
+) {
+    TextField(
+        value = value,
+        singleLine = true,
+        onValueChange = onValueChanged,
+        label = { Text(label) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = modifier
+    )
 }
 
 private fun String.isNumericOrEmpty(): Boolean {
